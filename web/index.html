@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A 股投研驾驶舱</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/web/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Critical Investment Consultant</p>
+        <h1>A 股投研驾驶舱</h1>
+      </div>
+      <button id="loadSampleBtn" class="ghost">载入样例持仓</button>
+    </header>
+
+    <main>
+      <section class="input-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>持仓输入</h2>
+            <p>粘贴持仓 JSON，系统会生成 Top 3 变化、假设体检、风险雷达、横向比较和验证点。</p>
+          </div>
+          <label class="toggle">
+            <input id="useLlm" type="checkbox" checked />
+            <span>使用 LLM</span>
+          </label>
+        </div>
+        <textarea id="holdingsInput" spellcheck="false" aria-label="持仓 JSON"></textarea>
+        <div class="actions">
+          <button id="analyzeBtn">生成投研报告</button>
+          <span id="statusText"></span>
+        </div>
+      </section>
+
+      <section class="hero-grid">
+        <article class="metric">
+          <span>Top Changes</span>
+          <strong id="topChangeCount">0</strong>
+        </article>
+        <article class="metric">
+          <span>风险雷达</span>
+          <strong id="riskCount">0</strong>
+        </article>
+        <article class="metric">
+          <span>假设体检</span>
+          <strong id="thesisCount">0</strong>
+        </article>
+        <article class="metric">
+          <span>验证点</span>
+          <strong id="validationCount">0</strong>
+        </article>
+      </section>
+
+      <section class="workbench">
+        <div class="column wide">
+          <div class="section-title">
+            <h2>今日最重要 3 条变化</h2>
+            <span id="llmStatus">LLM: not run</span>
+          </div>
+          <div id="topChanges" class="card-list empty">暂无报告</div>
+
+          <div class="section-title">
+            <h2>投资假设体检</h2>
+          </div>
+          <div id="thesisChecks" class="card-list empty">暂无体检</div>
+        </div>
+
+        <div class="column">
+          <div class="section-title">
+            <h2>风险雷达</h2>
+          </div>
+          <div id="riskRadar" class="card-list empty">暂无风险</div>
+
+          <div class="section-title">
+            <h2>下一验证点</h2>
+          </div>
+          <div id="validationPoints" class="card-list empty">暂无验证点</div>
+        </div>
+      </section>
+
+      <section class="workbench">
+        <div class="column wide">
+          <div class="section-title">
+            <h2>同板块横向比较</h2>
+          </div>
+          <div id="peerComparisons" class="card-list empty">暂无比较</div>
+        </div>
+        <div class="column">
+          <div class="section-title">
+            <h2>信号审计</h2>
+          </div>
+          <div id="signals" class="card-list empty">暂无信号</div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/web/app.js"></script>
+  </body>
+</html>

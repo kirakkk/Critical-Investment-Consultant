@@ -1,0 +1,94 @@
+[
+  {
+    "stock_code": "300750.SZ",
+    "stock_name": "宁德时代",
+    "theme": "新能源车产业链",
+    "state": "holding_watch",
+    "thesis": "动力电池龙头受益于储能和海外客户需求，但估值和毛利率需要持续验证。",
+    "cost_price": 180.0,
+    "current_price": 205.0,
+    "stock_20d_return": 0.08,
+    "sector_20d_return": 0.04,
+    "index_20d_return": 0.02,
+    "pe_percentile_5y": 0.58,
+    "source_rank": "B",
+    "events": [
+      {
+        "event_type": "sector_strength",
+        "impact_direction": "positive",
+        "source_rank": "B",
+        "claim": "新能源板块近 20 日强于指数。"
+      }
+    ],
+    "risks": ["海外政策不确定", "毛利率验证"]
+  },
+  {
+    "stock_code": "002594.SZ",
+    "stock_name": "比亚迪",
+    "theme": "新能源车产业链",
+    "state": "candidate",
+    "thesis": "整车与电池一体化带来规模优势，出口和高端化是后续验证点。",
+    "cost_price": 235.0,
+    "current_price": 250.0,
+    "stock_20d_return": 0.05,
+    "sector_20d_return": 0.04,
+    "index_20d_return": 0.02,
+    "pe_percentile_5y": 0.42,
+    "source_rank": "B",
+    "events": [
+      {
+        "event_type": "sales_growth",
+        "impact_direction": "positive",
+        "source_rank": "B",
+        "claim": "月度销量保持同比增长。"
+      }
+    ],
+    "risks": ["价格战"]
+  },
+  {
+    "stock_code": "600519.SH",
+    "stock_name": "贵州茅台",
+    "theme": "高端消费",
+    "state": "stock_tracking",
+    "thesis": "高端白酒需求韧性仍强，但渠道价格和库存变化决定赔率。",
+    "cost_price": 1500.0,
+    "current_price": 1420.0,
+    "stock_20d_return": -0.03,
+    "sector_20d_return": -0.02,
+    "index_20d_return": 0.02,
+    "pe_percentile_5y": 0.35,
+    "source_rank": "B",
+    "events": [
+      {
+        "event_type": "price_channel",
+        "impact_direction": "neutral",
+        "source_rank": "C",
+        "claim": "渠道价格需要继续跟踪。"
+      }
+    ],
+    "risks": ["消费需求放缓"]
+  },
+  {
+    "stock_code": "300000.SZ",
+    "stock_name": "示例风险股",
+    "theme": "AI 应用",
+    "state": "theme_watch",
+    "thesis": "受益于 AI 应用扩散，但收入兑现尚不清晰。",
+    "cost_price": 20.0,
+    "current_price": 32.0,
+    "stock_20d_return": 0.28,
+    "sector_20d_return": 0.12,
+    "index_20d_return": 0.02,
+    "pe_percentile_5y": 0.92,
+    "source_rank": "D",
+    "events": [
+      {
+        "event_type": "social_media_hype",
+        "impact_direction": "positive",
+        "source_rank": "D",
+        "claim": "社媒热度升高，但缺少公告验证。"
+      }
+    ],
+    "risks": ["传闻驱动", "估值过热", "问询函风险"]
+  }
+]
