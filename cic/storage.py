@@ -14,13 +14,16 @@ class JsonStore:
 
     def load(self) -> dict[str, Any]:
         if not self.path.exists():
-            return {"reports": [], "decisions": []}
+            return default_store()
         try:
-            return json.loads(self.path.read_text(encoding="utf-8"))
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+            return normalize_store(data if isinstance(data, dict) else {})
         except json.JSONDecodeError:
             backup = self.path.with_suffix(f".corrupt-{utc_now_iso().replace(':', '-')}.json")
             self.path.replace(backup)
-            return {"reports": [], "decisions": [], "corrupt_backup": str(backup)}
+            data = default_store()
+            data["corrupt_backup"] = str(backup)
+            return data
 
     def save(self, data: dict[str, Any]) -> None:
         tmp = self.path.with_suffix(".tmp")
@@ -46,3 +49,31 @@ class JsonStore:
 
     def decisions(self) -> list[dict[str, Any]]:
         return list(self.load().get("decisions", []))
+
+    def append_radar_report(self, report: dict[str, Any]) -> None:
+        data = self.load()
+        reports = data.setdefault("radar_reports", [])
+        reports.append(report)
+        data["radar_reports"] = reports[-20:]
+        snapshots = data.setdefault("radar_claims_snapshot", [])
+        radar_report = report.get("radar_report", {})
+        snapshots.extend(radar_report.get("claims", []))
+        data["radar_claims_snapshot"] = snapshots[-100:]
+        self.save(data)
+
+    def latest_radar_report(self) -> dict[str, Any] | None:
+        reports = self.load().get("radar_reports", [])
+        return reports[-1] if reports else None
+
+
+def default_store() -> dict[str, Any]:
+    return {"reports": [], "decisions": [], "radar_reports": [], "radar_decisions": [], "radar_claims_snapshot": []}
+
+
+def normalize_store(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = default_store()
+    normalized.update(data)
+    for key in ("reports", "decisions", "radar_reports", "radar_decisions", "radar_claims_snapshot"):
+        if not isinstance(normalized.get(key), list):
+            normalized[key] = []
+    return normalized

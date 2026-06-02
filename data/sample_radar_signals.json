@@ -1,0 +1,80 @@
+{
+  "stock_code": "001309.SZ",
+  "stock_name": "德明利",
+  "theme": "国产存储 / 企业级SSD / AI数据中心存储",
+  "weak_signals": [
+    {
+      "signal_text": "样例KOL线索：德明利可能从存储周期、AI数据中心SSD需求和国产替代中获得更高业绩弹性，但客户与利润兑现仍需验证。",
+      "source_family": "expert_kol",
+      "source_rank": "C",
+      "source_name": "@memory_cycle_watch",
+      "source_url": "manual://x-kol/dml-memory-cycle-20260602",
+      "raw_excerpt": "手动样例线索：不作为事实确认。",
+      "independence_group": "kol_memory_cycle_dml_20260602",
+      "kol_profile": {
+        "handle": "@memory_cycle_watch",
+        "kol_quality_score": 74,
+        "known_biases": ["偏主题景气叙事", "持仓未知"],
+        "conflict_flags": ["是否持仓未知"],
+        "notes": "样例KOL，用于验证KOL-only阻断逻辑。"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "公司公开定位为存储控制芯片及解决方案提供商，产品页面覆盖嵌入式存储、内存模组、移动存储、固态硬盘等方向。",
+      "source_family": "company_website",
+      "source_rank": "C",
+      "source_name": "深圳市德明利技术股份有限公司官网",
+      "source_url": "https://www.twsc.com.cn/",
+      "raw_excerpt": "专业存储控制芯片及解决方案提供商。",
+      "independence_group": "twsc_official_site_business_scope"
+    },
+    {
+      "claim": "2025年年度报告摘要确认德明利证券代码为001309，主营业务围绕存储主控芯片、固件方案和存储模组产品。",
+      "source_family": "official_disclosure",
+      "source_rank": "A",
+      "source_name": "2025年年度报告摘要",
+      "source_url": "https://epaper.stcn.com/pic/202602/28/479088ea26ead54bc4dfee20adf57aa4.pdf",
+      "raw_excerpt": "证券代码001309；专业存储控制芯片及解决方案提供商。",
+      "independence_group": "dml_2025_annual_report_business"
+    },
+    {
+      "claim": "2025年报摘要显示公司营业收入、净利润高增长，同时经营活动现金流量净额为负，现金流质量需要优先验证。",
+      "source_family": "financial_data",
+      "source_rank": "B",
+      "source_name": "2025年年度报告摘要财务指标",
+      "source_url": "https://epaper.stcn.com/pic/202602/28/479088ea26ead54bc4dfee20adf57aa4.pdf",
+      "raw_excerpt": "经营活动产生的现金流量净额为负。",
+      "stance": "contradict",
+      "independence_group": "dml_2025_annual_report_cashflow"
+    },
+    {
+      "claim": "2025年度向特定对象发行方案论证分析报告披露募投项目包含SSD扩产项目、DRAM扩产项目和智能存储管理及研发总部基地。",
+      "source_family": "official_disclosure",
+      "source_rank": "A",
+      "source_name": "2025年度向特定对象发行方案论证分析报告",
+      "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-11-26/274a6c18-14a4-435c-9d1d-480d885ef419.PDF",
+      "raw_excerpt": "募投项目包括SSD扩产、DRAM扩产。",
+      "independence_group": "dml_2025_refinancing_projects"
+    }
+  ],
+  "prior_claims": [
+    {
+      "claim_text": "德明利可能受益于国产存储和AI数据中心存储需求，但客户与现金流验证不足。",
+      "status": "created",
+      "scores": {
+        "E": 42,
+        "X": 22,
+        "I": 35,
+        "U": 55,
+        "D": "B"
+      }
+    }
+  ],
+  "risks": [
+    "KOL持仓未知，不能作为独立事实来源。",
+    "经营活动现金流量净额为负，需要验证收入增长质量。",
+    "存储行业价格周期波动可能放大业绩波动。"
+  ]
+}

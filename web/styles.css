@@ -39,6 +39,13 @@ body {
   backdrop-filter: blur(14px);
 }
 
+.top-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: var(--accent-strong);
@@ -91,7 +98,8 @@ button.ghost {
 
 .input-panel,
 .metric,
-.card {
+.card,
+.radar-summary {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -100,6 +108,17 @@ button.ghost {
 
 .input-panel {
   padding: 18px;
+}
+
+.radar-summary {
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.radar-summary p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
 }
 
 .panel-heading,
@@ -197,6 +216,10 @@ textarea {
   padding: 14px 0;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .card {
   padding: 14px;
 }
@@ -264,6 +287,10 @@ textarea {
 
   .topbar button {
     margin-top: 12px;
+  }
+
+  .top-actions {
+    justify-content: flex-start;
   }
 
   .hero-grid {

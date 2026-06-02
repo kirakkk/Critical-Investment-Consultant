@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from .models import Decision, to_jsonable
+from .radar_report import analyze_radar_input, latest_radar_report_summary
 from .report import analyze_holdings, latest_report_summary
 from .storage import JsonStore
 
@@ -37,8 +38,15 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
             sample_path = PROJECT_ROOT / "data" / "sample_holdings.json"
             self.write_json(json.loads(sample_path.read_text(encoding="utf-8")))
             return
+        if parsed.path == "/api/sample-radar-signals":
+            sample_path = PROJECT_ROOT / "data" / "sample_radar_signals.json"
+            self.write_json(json.loads(sample_path.read_text(encoding="utf-8")))
+            return
         if parsed.path in {"/api/dashboard/today", "/api/reports/latest"}:
             self.write_json(latest_report_summary(self.store.latest_report()))
+            return
+        if parsed.path == "/api/radar/latest":
+            self.write_json(latest_radar_report_summary(self.store.latest_radar_report()))
             return
         if parsed.path == "/api/decisions":
             self.write_json({"decisions": self.store.decisions()})
@@ -58,6 +66,17 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
                 return
             report = analyze_holdings(holdings, use_llm=bool(payload.get("use_llm", True)))
             self.store.append_report(report)
+            self.write_json(report)
+            return
+        if parsed.path == "/api/radar/analyze":
+            payload = self.read_json()
+            radar_payload = payload.get("radar") if isinstance(payload.get("radar"), dict) else payload
+            try:
+                report = analyze_radar_input(radar_payload, use_llm=bool(payload.get("use_llm", True)))
+            except ValueError as exc:
+                self.write_error(HTTPStatus.BAD_REQUEST, str(exc))
+                return
+            self.store.append_radar_report(report)
             self.write_json(report)
             return
         if parsed.path.startswith("/api/signals/") and parsed.path.endswith("/decision"):

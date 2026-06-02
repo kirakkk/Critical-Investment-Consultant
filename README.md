@@ -7,6 +7,7 @@ A local-first A-share investment research cockpit. The current MVP is built arou
 3. Peer comparison cards.
 4. Bear-case risk radar.
 5. Next validation calendar.
+6. Early weak-signal radar with KOL-only blocking, cross-validation, historical diffs, validation tasks, and bear cases.
 
 The system does not auto-trade and does not produce unconditional buy/sell instructions. LLM output is used for reading, summarizing, counterargument generation, and research questions; rule code controls scoring, hard gates, and state transitions.
 
@@ -35,6 +36,18 @@ $env:ZHIPU_MODEL="glm-4.6"
 ```
 
 The app also works without an LLM key using deterministic fallback logic, which keeps tests stable and prevents accidental secret usage.
+
+## Early Radar MVP
+
+Use the web button `德明利雷达` or call the API directly:
+
+```text
+GET  /api/sample-radar-signals
+POST /api/radar/analyze
+GET  /api/radar/latest
+```
+
+The sample radar input is `data/sample_radar_signals.json`. It uses 德明利 (`001309.SZ`) to validate the mechanics: a KOL weak signal, company/official evidence, cross-validation, a financial counter-signal, and follow-up validation tasks.
 
 ## Test
 

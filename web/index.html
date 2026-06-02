@@ -13,15 +13,18 @@
         <p class="eyebrow">Critical Investment Consultant</p>
         <h1>A 股投研驾驶舱</h1>
       </div>
-      <button id="loadSampleBtn" class="ghost">载入样例持仓</button>
+      <div class="top-actions">
+        <button id="loadSampleBtn" class="ghost">样例持仓</button>
+        <button id="loadRadarSampleBtn" class="ghost">德明利雷达</button>
+      </div>
     </header>
 
     <main>
       <section class="input-panel">
         <div class="panel-heading">
           <div>
-            <h2>持仓输入</h2>
-            <p>粘贴持仓 JSON，系统会生成 Top 3 变化、假设体检、风险雷达、横向比较和验证点。</p>
+            <h2 id="inputTitle">持仓输入</h2>
+            <p id="inputHelp">粘贴持仓 JSON，系统会生成 Top 3 变化、假设体检、风险雷达、横向比较和验证点。</p>
           </div>
           <label class="toggle">
             <input id="useLlm" type="checkbox" checked />
@@ -37,64 +40,118 @@
 
       <section class="hero-grid">
         <article class="metric">
-          <span>Top Changes</span>
+          <span id="metricOneLabel">Top Changes</span>
           <strong id="topChangeCount">0</strong>
         </article>
         <article class="metric">
-          <span>风险雷达</span>
+          <span id="metricTwoLabel">风险雷达</span>
           <strong id="riskCount">0</strong>
         </article>
         <article class="metric">
-          <span>假设体检</span>
+          <span id="metricThreeLabel">假设体检</span>
           <strong id="thesisCount">0</strong>
         </article>
         <article class="metric">
-          <span>验证点</span>
+          <span id="metricFourLabel">验证点</span>
           <strong id="validationCount">0</strong>
         </article>
       </section>
 
-      <section class="workbench">
-        <div class="column wide">
-          <div class="section-title">
-            <h2>今日最重要 3 条变化</h2>
-            <span id="llmStatus">LLM: not run</span>
-          </div>
-          <div id="topChanges" class="card-list empty">暂无报告</div>
+      <div id="holdingsSections">
+        <section class="workbench">
+          <div class="column wide">
+            <div class="section-title">
+              <h2>今日最重要 3 条变化</h2>
+              <span id="llmStatus">LLM: not run</span>
+            </div>
+            <div id="topChanges" class="card-list empty">暂无报告</div>
 
-          <div class="section-title">
-            <h2>投资假设体检</h2>
+            <div class="section-title">
+              <h2>投资假设体检</h2>
+            </div>
+            <div id="thesisChecks" class="card-list empty">暂无体检</div>
           </div>
-          <div id="thesisChecks" class="card-list empty">暂无体检</div>
-        </div>
 
-        <div class="column">
-          <div class="section-title">
-            <h2>风险雷达</h2>
-          </div>
-          <div id="riskRadar" class="card-list empty">暂无风险</div>
+          <div class="column">
+            <div class="section-title">
+              <h2>风险雷达</h2>
+            </div>
+            <div id="riskRadar" class="card-list empty">暂无风险</div>
 
-          <div class="section-title">
-            <h2>下一验证点</h2>
+            <div class="section-title">
+              <h2>下一验证点</h2>
+            </div>
+            <div id="validationPoints" class="card-list empty">暂无验证点</div>
           </div>
-          <div id="validationPoints" class="card-list empty">暂无验证点</div>
-        </div>
-      </section>
+        </section>
 
-      <section class="workbench">
-        <div class="column wide">
-          <div class="section-title">
-            <h2>同板块横向比较</h2>
+        <section class="workbench">
+          <div class="column wide">
+            <div class="section-title">
+              <h2>同板块横向比较</h2>
+            </div>
+            <div id="peerComparisons" class="card-list empty">暂无比较</div>
           </div>
-          <div id="peerComparisons" class="card-list empty">暂无比较</div>
-        </div>
-        <div class="column">
-          <div class="section-title">
-            <h2>信号审计</h2>
+          <div class="column">
+            <div class="section-title">
+              <h2>信号审计</h2>
+            </div>
+            <div id="signals" class="card-list empty">暂无信号</div>
           </div>
-          <div id="signals" class="card-list empty">暂无信号</div>
-        </div>
-      </section>
+        </section>
+      </div>
+
+      <div id="radarSections" class="hidden">
+        <section class="radar-summary">
+          <div class="section-title">
+            <h2>早期雷达报告</h2>
+            <span id="radarState">not run</span>
+          </div>
+          <p id="radarSummary">暂无报告</p>
+        </section>
+
+        <section class="workbench">
+          <div class="column wide">
+            <div class="section-title">
+              <h2>Claim 与交叉验证</h2>
+              <span id="radarLlmStatus">LLM: not run</span>
+            </div>
+            <div id="radarClaims" class="card-list empty">暂无 Claim</div>
+
+            <div class="section-title">
+              <h2>历史差异</h2>
+            </div>
+            <div id="claimRevisions" class="card-list empty">暂无差异</div>
+          </div>
+
+          <div class="column">
+            <div class="section-title">
+              <h2>阻断原因</h2>
+            </div>
+            <div id="upgradeBlockers" class="card-list empty">暂无阻断</div>
+
+            <div class="section-title">
+              <h2>反方证据</h2>
+            </div>
+            <div id="bearCases" class="card-list empty">暂无反方</div>
+          </div>
+        </section>
+
+        <section class="workbench">
+          <div class="column wide">
+            <div class="section-title">
+              <h2>下一验证任务</h2>
+            </div>
+            <div id="radarTasks" class="card-list empty">暂无任务</div>
+          </div>
+          <div class="column">
+            <div class="section-title">
+              <h2>来源画像</h2>
+            </div>
+            <div id="sourceProfiles" class="card-list empty">暂无来源</div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script src="/web/app.js"></script>

@@ -156,3 +156,130 @@ class Decision:
     next_action: str = ""
     stop_condition: str = ""
     decided_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class RadarEvidence:
+    evidence_id: str
+    stock_code: str
+    stock_name: str
+    claim: str
+    source_family: str
+    source_rank: str
+    source_url: str = ""
+    raw_excerpt: str = ""
+    stance: str = "support"
+    source_title: str = ""
+    independence_group: str = ""
+    evidence_date: str = field(default_factory=today_iso)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class SourceProfile:
+    source_id: str
+    source_family: str
+    source_rank: str
+    source_name: str
+    independence_group: str
+    credibility_score: int
+    cost_class: str = "free"
+    known_biases: list[str] = field(default_factory=list)
+    conflict_flags: list[str] = field(default_factory=list)
+    notes: str = ""
+
+
+@dataclass(slots=True)
+class RadarClaim:
+    claim_id: str
+    stock_code: str
+    stock_name: str
+    claim_text: str
+    theme: str
+    thesis_stage: str
+    status: str
+    scores: dict[str, Any]
+    evidence_ids: list[str]
+    source_profile_ids: list[str]
+    upgrade_blockers: list[str]
+    suggested_action: str
+    review_required: bool = True
+
+
+@dataclass(slots=True)
+class CrossValidationResult:
+    claim_id: str
+    gate_status: str
+    result_state: str
+    source_families: list[str]
+    independent_groups: list[str]
+    support_count: int
+    contradiction_count: int
+    x_score_before: int
+    x_score_after: int
+    upgrade_blockers: list[str]
+    strongest_support: list[dict[str, Any]]
+    strongest_contradictions: list[dict[str, Any]]
+
+
+@dataclass(slots=True)
+class ClaimRevision:
+    claim_id: str
+    previous_status: str
+    new_status: str
+    score_before: dict[str, Any]
+    score_after: dict[str, Any]
+    changes: list[str]
+    reason: str
+
+
+@dataclass(slots=True)
+class RadarValidationTask:
+    task_id: str
+    claim_id: str
+    stock_code: str
+    stock_name: str
+    task_type: str
+    question: str
+    target_source_family: str
+    success_criteria: str
+    failure_criteria: str
+    due_date: str
+    priority: str = "P1"
+    status: str = "pending"
+
+
+@dataclass(slots=True)
+class BearCase:
+    bear_case_id: str
+    claim_id: str
+    stock_code: str
+    stock_name: str
+    risk_type: str
+    claim: str
+    evidence_ids: list[str]
+    severity: str
+    what_would_reduce_this_risk: str
+
+
+@dataclass(slots=True)
+class RadarReport:
+    report_id: str
+    stock_code: str
+    stock_name: str
+    theme: str
+    generated_at: str
+    generated_by: str
+    summary: str
+    radar_state: str
+    scores: dict[str, Any]
+    claims: list[dict[str, Any]]
+    evidence: list[dict[str, Any]]
+    source_profiles: list[dict[str, Any]]
+    cross_validation: list[dict[str, Any]]
+    claim_revisions: list[dict[str, Any]]
+    validation_tasks: list[dict[str, Any]]
+    bear_cases: list[dict[str, Any]]
+    upgrade_blockers: list[str]
+    suggested_user_action: str
+    llm_status: str

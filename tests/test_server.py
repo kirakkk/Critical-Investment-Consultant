@@ -46,6 +46,14 @@ class ServerTest(unittest.TestCase):
         latest = self.get_json("/api/reports/latest")
         self.assertEqual(latest["brief"]["brief_date"], report["brief"]["brief_date"])
 
+    def test_radar_analyze_endpoint(self):
+        sample = self.get_json("/api/sample-radar-signals")
+        report = self.post_json("/api/radar/analyze", {"radar": sample, "use_llm": False})
+        self.assertIn("radar_report", report)
+        self.assertEqual(report["radar_report"]["stock_code"], "001309.SZ")
+        latest = self.get_json("/api/radar/latest")
+        self.assertEqual(latest["radar_report"]["report_id"], report["radar_report"]["report_id"])
+
 
 if __name__ == "__main__":
     unittest.main()
