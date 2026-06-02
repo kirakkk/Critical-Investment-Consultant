@@ -10,7 +10,7 @@ A local-first A-share investment research cockpit. The current MVP is built arou
 
 The system does not auto-trade and does not produce unconditional buy/sell instructions. LLM output is used for reading, summarizing, counterargument generation, and research questions; rule code controls scoring, hard gates, and state transitions.
 
-The next product direction is an early non-consensus multibagger radar rather than a generic dashboard. See `docs/specs/early-multibagger-radar-redesign.md` for the redesigned weak-signal, cross-validation, historical-diff, and 12-month path spec. See `docs/specs/agent-native-radar-architecture.md` for the agent-native execution architecture.
+The next product direction is an early non-consensus multibagger radar rather than a generic dashboard. See `docs/specs/early-multibagger-radar-redesign.md` for the redesigned weak-signal, cross-validation, historical-diff, and 12-month path spec. See `docs/specs/agent-native-radar-architecture.md` for the agent-native execution architecture, and `docs/specs/mvp-usable-cutline.md` for the trimmed MVP build plan.
 
 ## Run Locally
 

@@ -6,6 +6,7 @@
 
 - `docs/specs/early-multibagger-radar-redesign.md`
 - `docs/specs/information-source-cost-classification.md`
+- `docs/specs/mvp-usable-cutline.md`
 - 当前本地 MVP：`cic/*`、`web/*`
 
 ## 1. 结论
@@ -721,7 +722,7 @@ cic/evals/
 
 **WARNING**：不要一开始上复杂分布式系统。MVP 用 SQLite + job table + provider adapter 足够；等真实数据和工作流证明价值后再迁移 PostgreSQL、Redis、Prefect 或 Celery。
 
-**推荐实施**：先做 `Agent Runtime + Source Gate + Evidence/Claim Graph`，再做 UI 和自动抓取。没有这三件事，接更多数据源只会放大噪音。
+**推荐实施**：按 `docs/specs/mvp-usable-cutline.md` 先做 `POST /api/radar/analyze`、样例雷达 JSON、KOL-only gate、交叉验证、验证任务和最小前端展示。完整 Agent Runtime、SQLite/job queue、自动抓取、Signal Lab 和 eval dashboard 都等第一份可审阅雷达报告跑通后再做。
 
 ## 18. 参考资料
 

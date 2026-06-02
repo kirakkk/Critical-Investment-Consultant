@@ -4,6 +4,8 @@
 
 工程架构：本规格的 agent-native 实施方案见 `docs/specs/agent-native-radar-architecture.md`。该架构要求 Agent 负责发现、提取、归因、比对和解释，规则引擎负责评分、门禁和状态迁移。
 
+MVP 切线：为避免第一版过度平台化，实际开发优先按 `docs/specs/mvp-usable-cutline.md` 执行。第一目标是手动输入弱信号后生成第一份可审阅雷达报告，而不是先完成自动抓取、完整 Signal Lab 或完整 Agent Runtime。
+
 ## 1. 重新定位
 
 当前产品不应该继续叫「A 股投研驾驶舱」作为核心定位。驾驶舱天然偏向展示已发生的事实、持仓状态和日报摘要，这会把系统推向普通自选股工具、公告摘要器和静态评分表。
