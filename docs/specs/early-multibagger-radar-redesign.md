@@ -85,6 +85,7 @@
 | 经营杠杆 | 收入增速、毛利率、费用率、现金流出现组合拐点 | 财报、业绩预告、业绩快报 | 会计口径或一次性因素 |
 | 资本/治理变化 | 回购、股权激励、实控人变化、质押下降、减持结束 | 公告、监管文件 | 治理信号容易误读 |
 | 主题扩散 | 龙头强势后，中军和弹性标的开始跟随 | 行情、板块强度、同主题 peer | 资金驱动可能先于基本面，也可能纯投机 |
+| 专业 KOL 早期线索 | X、公众号、播客、产业社区里的专业 KOL 提前指出订单、产品、客户、价格或产业链变化 | KOL 原帖、长文、纪要、附带截图/链接/数据源 | 容易混入持仓喊单、利益冲突和二手消息 |
 | 另类公开足迹 | 招聘、专利、招投标、供应商/客户公告、产品上线 | 招聘网站、专利检索、政府采购、客户官网 | 数据噪音高，必须二次验证 |
 
 ### 5.2 来源家族
@@ -97,6 +98,7 @@
 | 行业价格/产量/库存数据 | industry_data | B/C | 是 |
 | 招投标/专利/招聘/客户发布 | public_footprint | C/D | 是，但只能作为弱验证 |
 | 券商研报/媒体新闻 | research_media | C | 是，但同源观点需降权 |
+| 专业 KOL / X / 产业社区 | expert_kol | B/C/D 动态 | 是，但必须绑定来源档案 |
 | 社媒/论坛/传闻 | social_rumor | D | 只可记录，不可升级 |
 | 用户手动观察 | user_note | C/D | 取决于附件证据 |
 
@@ -105,8 +107,40 @@
 1. 同一篇文章被多个媒体转载，只算 1 个 `independence_group`。
 2. 同一公司公告和基于该公告的新闻解读，最多只算公告一个强证据。
 3. 同一券商研报系列更新，最多只算同一来源家族一次。
-4. 社媒热度只能提高「需要验证」优先级，不能提高候选置信度。
-5. A/B 级证据可以确认或证伪 claim；C/D 级证据只能提出或辅助验证 claim。
+4. 同一 KOL 的连续转发、复述和补充帖，最多只算一个 `independence_group`。
+5. 高质量 KOL 可以作为优先级很高的早期线索源，但不能替代公告、财务、行业数据或公开足迹确认事实。
+6. 社媒热度只能提高「需要验证」优先级，不能提高候选置信度。
+7. A/B 级证据可以确认或证伪 claim；C/D 级证据只能提出或辅助验证 claim。
+
+### 5.3 专业 KOL 来源档案
+
+X 上的产业 KOL、基金经理、卖方/买方研究员、工程师、渠道商、产业链从业者，常常比公告和财报更早暴露非共识线索。系统必须把这类来源从普通社媒里单独拆出来，作为「优质线索源」管理。
+
+但 KOL 的高价值来自长期可审计记录，而不是粉丝数。每个 KOL 必须先进入 `source_profiles`，再参与评分。
+
+| 维度 | 分值 | 说明 |
+| --- | ---: | --- |
+| 身份和领域稳定性 | 0-20 | 是否长期专注同一产业/主题，是否能识别真实身份或机构背景 |
+| 历史命中率 | 0-25 | 过去 claim 是否被公告、财报、行情或行业数据验证 |
+| 证据纪律 | 0-25 | 是否给出原始链接、截图、数据口径、渠道来源或可复核事实 |
+| 利益冲突透明度 | 0-10 | 是否披露持仓、商业关系、广告或付费推广 |
+| 原创信息比例 | 0-10 | 是否提供原创产业观察，而不是搬运新闻和研报 |
+| 可证伪程度 | 0-10 | 是否给出明确时间窗口、验证点和失败条件 |
+
+KOL 动态等级：
+
+| `kol_quality_score` | 允许 source_rank | 系统解释 |
+| ---: | --- | --- |
+| >= 80 | B | 优质早期线索源，可提高验证优先级和 X 上限，但不能单独触发候选 |
+| 50-79 | C | 可进入验证队列，需要独立来源确认 |
+| < 50 | D | 普通社媒线索，只记录不升级 |
+
+硬性降级规则：
+
+1. 匿名账号、营销号、纯情绪喊单账号最高只能是 D。
+2. 只给目标价、涨幅想象或交易口号，不给事实依据，最高只能是 D。
+3. 未披露明显利益冲突，且多次出现反向诱导或删除历史帖，降级到 D 并标记 `conflict_flags`。
+4. KOL 原创线索即使为 B，也只能把 claim 推到 `validation_queue` 或 `evidence_convergence`；进入 `asymmetric_candidate` 必须至少再有一个 official_disclosure、market_financial_data、industry_data 或 public_footprint 证据。
 
 ## 6. 新状态机
 
@@ -174,6 +208,7 @@ D：Downside Gate，下行与毁灭性风险门槛
 | --- | ---: |
 | 只有 D 级社媒或用户备注 | 30 |
 | 一个 C 级来源，未独立验证 | 40 |
+| 一个 B 级专业 KOL 原创线索，未独立验证 | 55 |
 | 两个来源但同一来源家族 | 50 |
 | 两个独立来源家族，其中至少一个 B 级 | 65 |
 | A 级公告/财报加一个独立 B/C 级来源 | 80 |
@@ -227,6 +262,13 @@ D 不是加分项，而是阻断项：
   "stock_code": "300000.SZ",
   "claim_text": "公司 AI 应用订单可能进入收入确认前夜",
   "source_family_matrix": {
+    "expert_kol": {
+      "support": 1,
+      "oppose": 0,
+      "best_rank": "B",
+      "independence_groups": ["x_kol_ai_chain_20260601"],
+      "source_profile_ids": ["src_x_ai_chain_researcher"]
+    },
     "social_rumor": {
       "support": 1,
       "oppose": 0,
@@ -262,7 +304,8 @@ D 不是加分项，而是阻断项：
 2. `40 <= X < 60`：进入验证队列。
 3. `X >= 60`：可进入拐点观察，但必须同时有反方证据。
 4. `X >= 65` 且 `I >= 60` 且 `U >= 65` 且 `D in A/B`：才可进入非对称候选。
-5. 任意 A 级证据与核心 claim 直接矛盾，状态必须降级到 `falsified` 或 `manual_review_required`。
+5. `expert_kol` 即使为 B 级，也必须再被至少一个非 KOL 来源家族验证，才允许进入 `asymmetric_candidate`。
+6. 任意 A 级证据与核心 claim 直接矛盾，状态必须降级到 `falsified` 或 `manual_review_required`。
 
 ## 9. 历史比对引擎
 
@@ -410,6 +453,7 @@ CREATE TABLE evidence_observations (
   observed_at TIMESTAMPTZ NOT NULL,
   source_rank source_rank NOT NULL,
   source_family TEXT NOT NULL,
+  source_profile_id TEXT,
   independence_group TEXT NOT NULL,
   source_url TEXT,
   title TEXT NOT NULL,
@@ -418,6 +462,24 @@ CREATE TABLE evidence_observations (
   stance TEXT NOT NULL CHECK (stance IN ('support', 'oppose', 'neutral', 'unknown')),
   extraction_confidence NUMERIC NOT NULL CHECK (extraction_confidence BETWEEN 0 AND 1),
   raw_document_id TEXT
+);
+
+CREATE TABLE source_profiles (
+  source_profile_id TEXT PRIMARY KEY,
+  platform TEXT NOT NULL,
+  handle TEXT NOT NULL,
+  display_name TEXT,
+  source_family TEXT NOT NULL DEFAULT 'expert_kol',
+  expertise_tags TEXT[] NOT NULL DEFAULT '{}',
+  kol_quality_score INTEGER NOT NULL CHECK (kol_quality_score BETWEEN 0 AND 100),
+  allowed_source_rank source_rank NOT NULL,
+  identity_confidence TEXT NOT NULL CHECK (identity_confidence IN ('high', 'medium', 'low', 'unknown')),
+  track_record_summary TEXT NOT NULL,
+  verified_hit_count INTEGER NOT NULL DEFAULT 0,
+  verified_miss_count INTEGER NOT NULL DEFAULT 0,
+  conflict_flags TEXT[] NOT NULL DEFAULT '{}',
+  last_reviewed_at TIMESTAMPTZ NOT NULL,
+  UNIQUE (platform, handle)
 );
 
 CREATE TABLE claims (
@@ -515,6 +577,7 @@ CREATE TABLE validation_tasks (
   "reports": [],
   "decisions": [],
   "evidence_observations": [],
+  "source_profiles": [],
   "claims": [],
   "claim_revisions": [],
   "contradictions": [],
@@ -530,6 +593,7 @@ CREATE TABLE validation_tasks (
 | --- | --- | --- | --- |
 | 弱信号捕捉 Agent | 公告、新闻、用户输入、行情异常、公开足迹 | `evidence_observations` 和初始 `claims` | 必须 |
 | 来源归因 Agent | 原始来源、URL、文本、发布时间 | `source_rank`、`source_family`、`independence_group` | 必须 |
+| KOL 档案 Agent | X/KOL 账号、历史 claim、命中/未命中、利益冲突 | `source_profiles`、`kol_quality_score`、动态 source_rank | 必须 |
 | 交叉验证 Agent | claim + evidence graph | `cross_validation_matrix`、X 分数、待验证来源 | 必须 |
 | 历史差异 Agent | 新证据 + 旧 claim/revision | `claim_revisions`、diff card、contradictions | 必须 |
 | 路径 Agent | 高潜 claim + 估值/财务/催化 | 12 个月 path 和 milestones | 必须 |
@@ -567,12 +631,20 @@ Request:
 {
   "stock_code": "300000.SZ",
   "stock_name": "示例公司",
-  "signal_text": "社媒称公司某 AI 产品开始被头部客户试用",
-  "source_url": "https://example.com/thread/1",
-  "source_family": "social_rumor",
-  "source_rank": "D",
+  "signal_text": "某 AI 产业 KOL 称公司产品开始被头部客户试用，并给出客户侧公开页面线索",
+  "source_url": "https://x.com/example/status/1",
+  "source_family": "expert_kol",
+  "source_rank": "C",
+  "source_profile": {
+    "platform": "x",
+    "handle": "@example_ai_chain",
+    "kol_quality_score": 72,
+    "allowed_source_rank": "C",
+    "expertise_tags": ["AI 应用", "产业链跟踪"],
+    "conflict_flags": ["持仓未知"]
+  },
   "observed_at": "2026-06-02T20:00:00+08:00",
-  "user_note": "只作为线索，先查公告和客户侧公开信息"
+  "user_note": "KOL 线索优先查客户侧公开信息、公告和财报合同负债"
 }
 ```
 
@@ -581,10 +653,10 @@ Response:
 ```json
 {
   "claim_id": "clm_300000sz_20260602_001",
-  "radar_state": "raw_weak_signal",
-  "scores": {"E": 55, "X": 20, "I": 0, "U": 30, "D": "B"},
+  "radar_state": "validation_queue",
+  "scores": {"E": 60, "X": 40, "I": 0, "U": 35, "D": "B"},
   "upgrade_blockers": [
-    "只有 D 级来源",
+    "只有 KOL 来源，尚未被非 KOL 来源家族验证",
     "缺少 official_disclosure 或 public_footprint 独立验证",
     "缺少财务兑现路径"
   ],
@@ -682,8 +754,9 @@ Response:
 
 1. 新增 source family normalization。
 2. 新增 independence group 去重。
-3. 新增 `cross_validation_matrix_for_claim`。
-4. 写测试：两个同源转载不增加 X，两个独立家族才增加 X。
+3. 新增 KOL source profile 和动态 source_rank。
+4. 新增 `cross_validation_matrix_for_claim`。
+5. 写测试：两个同源转载不增加 X，两个独立家族才增加 X，KOL-only 不能升级候选。
 
 ### Phase 3：历史差异和 claim revision
 
@@ -717,25 +790,28 @@ Response:
 1. 用户录入 D 级社媒弱信号后，系统必须创建 `raw_weak_signal`，不得创建 `asymmetric_candidate`。
 2. D 级弱信号必须生成至少 1 个 `validation_task`，且任务必须指定 `required_source_family`。
 3. 两条同源转载证据不得让 `source_family_count` 增加到 2。
-4. 两个独立来源家族支持同一 claim 时，X 分数必须上升，并记录来源家族明细。
-5. 新证据进入时，系统必须生成 `claim_revision`，包含 `previous_claim_text`、`new_claim_text`、`score_before`、`score_after`。
-6. 不允许再用固定 `R - 5` 或 `T - 4` 伪造 `score_before`。
-7. A/B 级反向证据与核心 claim 矛盾时，必须创建 `contradiction` 并 `review_required=true`。
-8. 进入 `asymmetric_candidate` 必须满足：X >= 65、I >= 60、U >= 65、D in A/B。
-9. 每个 `asymmetric_candidate` 必须有 12 个月路径，且至少包含 4 个 milestone。
-10. 每个 milestone 必须有 `must_happen`、`evidence_family_required`、`kill_if_missed`。
-11. milestone 过期未完成时，必须进入 `/api/radar/brief` 的 `milestones_due` 或 `expired_paths`。
-12. 雷达 brief 必须优先展示矛盾、验证任务过期、独立来源新增和候选升级。
-13. 前端首屏必须展示弱信号收件箱、交叉验证矩阵、12 个月路径/证伪地图。
-14. 任何 API 响应不得包含无条件买入、卖出、满仓、清仓等交易指令。
-15. 所有 LLM 输出必须可被 JSON Schema 校验；校验失败时使用谨慎失败路径。
-16. 测试套件必须覆盖以上状态迁移和阻断规则。
+4. X/KOL 来源必须创建或引用 `source_profile`，并保存 `kol_quality_score`、`allowed_source_rank` 和 `conflict_flags`。
+5. `kol_quality_score >= 80` 的 KOL 可以被映射为 B 级线索源，但系统必须显示「不能单独触发候选」。
+6. 单一 KOL 来源无论质量多高，都不得让 claim 进入 `asymmetric_candidate`。
+7. 两个独立来源家族支持同一 claim 时，X 分数必须上升，并记录来源家族明细。
+8. 新证据进入时，系统必须生成 `claim_revision`，包含 `previous_claim_text`、`new_claim_text`、`score_before`、`score_after`。
+9. 不允许再用固定 `R - 5` 或 `T - 4` 伪造 `score_before`。
+10. A/B 级反向证据与核心 claim 矛盾时，必须创建 `contradiction` 并 `review_required=true`。
+11. 进入 `asymmetric_candidate` 必须满足：X >= 65、I >= 60、U >= 65、D in A/B。
+12. 每个 `asymmetric_candidate` 必须有 12 个月路径，且至少包含 4 个 milestone。
+13. 每个 milestone 必须有 `must_happen`、`evidence_family_required`、`kill_if_missed`。
+14. milestone 过期未完成时，必须进入 `/api/radar/brief` 的 `milestones_due` 或 `expired_paths`。
+15. 雷达 brief 必须优先展示矛盾、验证任务过期、独立来源新增和候选升级。
+16. 前端首屏必须展示弱信号收件箱、交叉验证矩阵、12 个月路径/证伪地图。
+17. 任何 API 响应不得包含无条件买入、卖出、满仓、清仓等交易指令。
+18. 所有 LLM 输出必须可被 JSON Schema 校验；校验失败时使用谨慎失败路径。
+19. 测试套件必须覆盖以上状态迁移和阻断规则。
 
 ## 17. 测试计划
 
 | 层级 | 测试项 | 数量 |
 | --- | --- | ---: |
-| Unit | source family 归类、independence group 去重 | +6 |
+| Unit | source family 归类、KOL 动态等级、independence group 去重 | +10 |
 | Unit | E/X/I/U/D 评分和 candidate gate | +8 |
 | Unit | claim revision diff、contradiction 创建 | +6 |
 | Unit | 12 个月 milestone 过期和 kill condition | +5 |
