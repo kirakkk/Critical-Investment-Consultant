@@ -1,6 +1,6 @@
 # Critical Investment Consultant
 
-A local-first A-share investment research cockpit. The MVP is built around daily research outputs rather than stock tips:
+A local-first A-share investment research cockpit. The current MVP is built around daily research outputs rather than stock tips:
 
 1. Top 3 changes.
 2. Investment thesis checks.
@@ -9,6 +9,8 @@ A local-first A-share investment research cockpit. The MVP is built around daily
 5. Next validation calendar.
 
 The system does not auto-trade and does not produce unconditional buy/sell instructions. LLM output is used for reading, summarizing, counterargument generation, and research questions; rule code controls scoring, hard gates, and state transitions.
+
+The next product direction is an early non-consensus multibagger radar rather than a generic dashboard. See `docs/specs/early-multibagger-radar-redesign.md` for the redesigned weak-signal, cross-validation, historical-diff, and 12-month path spec.
 
 ## Run Locally
 
