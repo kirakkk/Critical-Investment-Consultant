@@ -90,6 +90,8 @@
 
 ### 5.2 来源家族
 
+来源家族用于判断证据质量和独立性；免费/收费、授权和自动化边界应由独立的信息源目录管理。具体划分见 `docs/specs/information-source-cost-classification.md`，后续实现时不得用「付费」替代 `source_rank`，也不得用「免费」降低官方事实源等级。
+
 | 家族 | source_family | 默认等级 | 是否独立计数 |
 | --- | --- | --- | --- |
 | 交易所/巨潮/公司公告 | official_disclosure | A | 是 |
