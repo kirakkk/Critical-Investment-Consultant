@@ -87,6 +87,17 @@ button {
   cursor: pointer;
 }
 
+button.mini {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 button:hover {
   background: var(--accent-strong);
 }
@@ -248,6 +259,13 @@ textarea {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 10px;
+}
+
+.decision-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .badge {

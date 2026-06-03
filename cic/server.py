@@ -7,7 +7,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from .models import Decision, to_jsonable
+from .models import Decision, RadarDecision, to_jsonable
 from .radar_report import analyze_radar_input, latest_radar_report_summary
 from .report import analyze_holdings, latest_report_summary
 from .storage import JsonStore
@@ -50,6 +50,9 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
             return
         if parsed.path == "/api/decisions":
             self.write_json({"decisions": self.store.decisions()})
+            return
+        if parsed.path == "/api/radar/decisions":
+            self.write_json({"decisions": self.store.radar_decisions()})
             return
         if parsed.path.startswith("/api/"):
             self.write_error(HTTPStatus.NOT_FOUND, "unknown api endpoint")
@@ -94,6 +97,28 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
                 self.write_error(HTTPStatus.BAD_REQUEST, "decision must be confirm, ignore, or add_to_review")
                 return
             self.store.add_decision(decision)
+            self.write_json({"ok": True, "decision": to_jsonable(decision)})
+            return
+        if parsed.path.startswith("/api/radar/claims/") and parsed.path.endswith("/decision"):
+            parts = parsed.path.strip("/").split("/")
+            claim_id = parts[3] if len(parts) >= 4 else ""
+            payload = self.read_json()
+            decision = RadarDecision(
+                claim_id=claim_id,
+                decision=str(payload.get("decision") or ""),
+                reason=str(payload.get("reason") or ""),
+                report_id=str(payload.get("report_id") or ""),
+                stock_code=str(payload.get("stock_code") or ""),
+                stock_name=str(payload.get("stock_name") or ""),
+                next_action=str(payload.get("next_action") or ""),
+            )
+            if decision.decision not in {"confirm", "ignore", "add_to_review"}:
+                self.write_error(HTTPStatus.BAD_REQUEST, "decision must be confirm, ignore, or add_to_review")
+                return
+            if not decision.claim_id:
+                self.write_error(HTTPStatus.BAD_REQUEST, "claim_id is required")
+                return
+            self.store.add_radar_decision(decision)
             self.write_json({"ok": True, "decision": to_jsonable(decision)})
             return
         self.write_error(HTTPStatus.NOT_FOUND, "unknown api endpoint")

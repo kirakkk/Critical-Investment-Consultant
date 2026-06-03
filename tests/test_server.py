@@ -54,6 +54,26 @@ class ServerTest(unittest.TestCase):
         latest = self.get_json("/api/radar/latest")
         self.assertEqual(latest["radar_report"]["report_id"], report["radar_report"]["report_id"])
 
+    def test_radar_claim_decision_endpoint(self):
+        sample = self.get_json("/api/sample-radar-signals")
+        report = self.post_json("/api/radar/analyze", {"radar": sample, "use_llm": False})
+        radar = report["radar_report"]
+        claim_id = radar["claims"][0]["claim_id"]
+        decision = self.post_json(
+            f"/api/radar/claims/{claim_id}/decision",
+            {
+                "decision": "add_to_review",
+                "reason": "现金流反证需要复盘",
+                "report_id": radar["report_id"],
+                "stock_code": radar["stock_code"],
+                "stock_name": radar["stock_name"],
+            },
+        )
+        self.assertTrue(decision["ok"])
+        decisions = self.get_json("/api/radar/decisions")
+        self.assertEqual(decisions["decisions"][0]["claim_id"], claim_id)
+        self.assertEqual(decisions["decisions"][0]["decision"], "add_to_review")
+
 
 if __name__ == "__main__":
     unittest.main()

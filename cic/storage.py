@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .models import Decision, to_jsonable, utc_now_iso
+from .models import Decision, RadarDecision, to_jsonable, utc_now_iso
 
 
 class JsonStore:
@@ -49,6 +49,16 @@ class JsonStore:
 
     def decisions(self) -> list[dict[str, Any]]:
         return list(self.load().get("decisions", []))
+
+    def add_radar_decision(self, decision: RadarDecision) -> None:
+        data = self.load()
+        decisions = data.setdefault("radar_decisions", [])
+        decisions.append(to_jsonable(decision))
+        data["radar_decisions"] = decisions[-100:]
+        self.save(data)
+
+    def radar_decisions(self) -> list[dict[str, Any]]:
+        return list(self.load().get("radar_decisions", []))
 
     def append_radar_report(self, report: dict[str, Any]) -> None:
         data = self.load()

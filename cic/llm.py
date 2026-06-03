@@ -36,8 +36,8 @@ class LLMClient:
     ) -> None:
         self.base_url = (base_url or os.getenv("ZHIPU_BASE_URL") or os.getenv("LLM_BASE_URL") or DEFAULT_CODING_BASE_URL).rstrip("/")
         self.api_key = api_key if api_key is not None else (os.getenv("ZHIPU_API_KEY") or os.getenv("LLM_API_KEY") or "")
-        self.model = model or os.getenv("ZHIPU_MODEL") or os.getenv("LLM_MODEL") or "glm-4.6"
-        self.timeout_seconds = timeout_seconds or float(os.getenv("LLM_TIMEOUT_SECONDS") or 45)
+        self.model = model or os.getenv("ZHIPU_MODEL") or os.getenv("LLM_MODEL") or "glm-5.1"
+        self.timeout_seconds = timeout_seconds or float(os.getenv("LLM_TIMEOUT_SECONDS") or 90)
 
     def chat_json(self, system_prompt: str, user_prompt: str, fallback: dict[str, Any]) -> LLMResult:
         if not self.api_key:

@@ -36,6 +36,7 @@ const els = {
 };
 
 let currentMode = "holdings";
+let lastRadarReport = null;
 
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
@@ -155,6 +156,7 @@ function renderReport(report) {
 
 function renderRadarReport(payload) {
   const report = payload.radar_report || {};
+  lastRadarReport = report;
   els.topChangeCount.textContent = (report.claims || []).length;
   els.riskCount.textContent = (report.bear_cases || []).length;
   els.thesisCount.textContent = (report.cross_validation || []).length;
@@ -164,7 +166,7 @@ function renderRadarReport(payload) {
   els.radarLlmStatus.textContent = `LLM: ${(payload.llm && payload.llm.status) || report.llm_status || "unknown"}`;
 
   const crossByClaim = Object.fromEntries((report.cross_validation || []).map((item) => [item.claim_id, item]));
-  renderCards(els.radarClaims, report.claims || [], (item) => radarClaimCard(item, crossByClaim[item.claim_id]));
+  renderCards(els.radarClaims, report.claims || [], (item) => radarClaimCard(item, crossByClaim[item.claim_id], report));
   renderCards(els.claimRevisions, report.claim_revisions || [], revisionCard);
   renderCards(els.upgradeBlockers, report.upgrade_blockers || [], blockerCard);
   renderCards(els.bearCases, report.bear_cases || [], bearCard);
@@ -269,7 +271,7 @@ function signalCard(item) {
   </article>`;
 }
 
-function radarClaimCard(item, cross) {
+function radarClaimCard(item, cross, report) {
   const score = item.scores || {};
   return `<article class="card">
     <div class="card-head">
@@ -281,6 +283,11 @@ function radarClaimCard(item, cross) {
     <p><strong>动作：</strong>${escapeHtml(item.suggested_action)}</p>
     ${badges([`E ${score.E}`, `X ${score.X}`, `I ${score.I}`, `U ${score.U}`, `D ${score.D}`])}
     ${badges(item.upgrade_blockers || [], "warn")}
+    <div class="decision-row" data-report-id="${escapeHtml(report.report_id)}">
+      <button class="mini claim-decision" data-action="confirm" data-claim-id="${escapeHtml(item.claim_id)}">确认</button>
+      <button class="mini ghost claim-decision" data-action="ignore" data-claim-id="${escapeHtml(item.claim_id)}">忽略</button>
+      <button class="mini ghost claim-decision" data-action="add_to_review" data-claim-id="${escapeHtml(item.claim_id)}">复盘</button>
+    </div>
   </article>`;
 }
 
@@ -343,4 +350,41 @@ function sourceProfileCard(item) {
 els.loadSampleBtn.addEventListener("click", loadSample);
 els.loadRadarSampleBtn.addEventListener("click", loadRadarSample);
 els.analyzeBtn.addEventListener("click", analyze);
+document.addEventListener("click", handleClaimDecisionClick);
 loadRadarSample().catch(() => loadSample().catch(() => setStatus("样例载入失败")));
+
+async function handleClaimDecisionClick(event) {
+  const button = event.target.closest(".claim-decision");
+  if (!button) {
+    return;
+  }
+  const claimId = button.dataset.claimId;
+  const action = button.dataset.action;
+  const claim = (lastRadarReport && (lastRadarReport.claims || []).find((item) => item.claim_id === claimId)) || {};
+  const label = { confirm: "确认", ignore: "忽略", add_to_review: "加入复盘" }[action] || action;
+  const defaultReason = `${label}：${claim.status || "manual_review"}`;
+  const reason = window.prompt("记录一句处理理由", defaultReason);
+  if (reason === null) {
+    return;
+  }
+  button.disabled = true;
+  try {
+    await fetchJson(`/api/radar/claims/${encodeURIComponent(claimId)}/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        decision: action,
+        reason,
+        report_id: lastRadarReport ? lastRadarReport.report_id : "",
+        stock_code: lastRadarReport ? lastRadarReport.stock_code : "",
+        stock_name: lastRadarReport ? lastRadarReport.stock_name : "",
+        next_action: claim.suggested_action || "",
+      }),
+    });
+    setStatus(`已记录：${label}`);
+  } catch (error) {
+    setStatus(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}

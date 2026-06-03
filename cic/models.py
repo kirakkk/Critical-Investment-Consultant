@@ -159,6 +159,18 @@ class Decision:
 
 
 @dataclass(slots=True)
+class RadarDecision:
+    claim_id: str
+    decision: str
+    reason: str
+    report_id: str = ""
+    stock_code: str = ""
+    stock_name: str = ""
+    next_action: str = ""
+    decided_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
 class RadarEvidence:
     evidence_id: str
     stock_code: str

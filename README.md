@@ -32,7 +32,8 @@ Create a local `.env` or set environment variables before running:
 ```powershell
 $env:ZHIPU_BASE_URL="https://open.bigmodel.cn/api/coding/paas/v4"
 $env:ZHIPU_API_KEY="your-local-key"
-$env:ZHIPU_MODEL="glm-4.6"
+$env:ZHIPU_MODEL="glm-5.1"
+$env:LLM_TIMEOUT_SECONDS="120"
 ```
 
 The app also works without an LLM key using deterministic fallback logic, which keeps tests stable and prevents accidental secret usage.
@@ -45,6 +46,8 @@ Use the web button `德明利雷达` or call the API directly:
 GET  /api/sample-radar-signals
 POST /api/radar/analyze
 GET  /api/radar/latest
+POST /api/radar/claims/{claim_id}/decision
+GET  /api/radar/decisions
 ```
 
 The sample radar input is `data/sample_radar_signals.json`. It uses 德明利 (`001309.SZ`) to validate the mechanics: a KOL weak signal, company/official evidence, cross-validation, a financial counter-signal, and follow-up validation tasks.
