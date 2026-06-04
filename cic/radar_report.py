@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from .deep_dive import build_deep_dive_bundle
 from .llm import LLMClient
 from .models import RadarReport, to_jsonable, utc_now_iso
 from .radar_rules import (
@@ -21,7 +22,13 @@ from .radar_rules import (
 )
 
 
-def analyze_radar_input(payload: dict[str, Any], llm_client: LLMClient | None = None, use_llm: bool = True) -> dict[str, Any]:
+def analyze_radar_input(
+    payload: dict[str, Any],
+    llm_client: LLMClient | None = None,
+    use_llm: bool = True,
+    auto_run_deep_dives: bool = True,
+    max_auto_deep_dives: int = 2,
+) -> dict[str, Any]:
     radar = normalize_radar_input(payload)
     evidence = evidence_from_payload(radar)
     profiles = source_profiles_for(evidence)
@@ -51,12 +58,13 @@ def analyze_radar_input(payload: dict[str, Any], llm_client: LLMClient | None = 
         llm_status = result.status
         llm_error = result.error
 
+    generated_at = utc_now_iso()
     report = RadarReport(
-        report_id=stable_id(radar["stock_code"], utc_now_iso(), "radar", prefix="rrp_"),
+        report_id=stable_id(radar["stock_code"], generated_at, "radar", prefix="rrp_"),
         stock_code=radar["stock_code"],
         stock_name=radar["stock_name"],
         theme=radar["theme"],
-        generated_at=utc_now_iso(),
+        generated_at=generated_at,
         generated_by="radar-rule-engine+llm-editor",
         summary=str(editor.get("summary") or fallback_editor["summary"]),
         radar_state=state,
@@ -73,7 +81,7 @@ def analyze_radar_input(payload: dict[str, Any], llm_client: LLMClient | None = 
         llm_status=llm_status,
     )
 
-    return {
+    output = {
         "radar_report": to_jsonable(report),
         "editor_questions": editor.get("editor_questions", fallback_editor["editor_questions"]),
         "input": radar,
@@ -83,6 +91,12 @@ def analyze_radar_input(payload: dict[str, Any], llm_client: LLMClient | None = 
             "provider": "zhipu-openai-compatible",
         },
     }
+    output["deep_dives"] = build_deep_dive_bundle(
+        output,
+        auto_run=auto_run_deep_dives,
+        max_auto_runs=max_auto_deep_dives,
+    )
+    return output
 
 
 def strongest_state(states: list[str]) -> str:
@@ -213,6 +227,7 @@ def latest_radar_report_summary(report: dict[str, Any] | None) -> dict[str, Any]
                 "llm_status": "not_run",
             },
             "editor_questions": [],
+            "deep_dives": {"tasks": [], "runs": [], "findings": [], "verdicts": []},
             "llm": {"status": "not_run", "error": "", "provider": "zhipu-openai-compatible"},
         }
     return report

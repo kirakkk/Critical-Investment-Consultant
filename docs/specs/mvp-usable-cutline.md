@@ -144,6 +144,17 @@ RadarReport
 
 这些 Agent 可以先是普通 Python 函数 + LLM JSON 调用，不需要 OpenAI Agents SDK、handoff、streaming 或工具编排。
 
+最小 skill 配置以 `cic/agent_skills.py` 为准：
+
+| MVP Agent | 默认 skill |
+| --- | --- |
+| Intake Agent | 手动信源导入、来源归因、claim 提取、KOL 档案查询、证据去重 |
+| Validation Agent | claim 图谱查询、交叉验证、验证任务生成、来源授权门禁 |
+| Diff/Risk Agent | 历史差异、反证挖掘、财务质量分析、行情/板块分析、验证任务生成 |
+| Editor Agent | claim 图谱查询、引用包生成、雷达 brief 主编；不配置网页抓取或公告抓取 |
+
+凡是 `public_web_scrape`、`official_disclosure_fetch`、`market_snapshot_analysis`、`financial_statement_analysis` 这类自动访问或外部数据 skill，都必须经过 `source_catalog_gate`。KOL Scout 默认只吃人工导入，不自动抓社媒。
+
 ### 3.4 最小规则
 
 必须实现：

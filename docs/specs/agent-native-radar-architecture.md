@@ -320,6 +320,43 @@ Schema 规则：
 | Scenario Agent | 生成 base/upside/failure case | 不能输出确定收益承诺 |
 | Editor Agent | 生成 brief | 不能新增事实，只能引用已有 object_id |
 
+### 6.6 Agent Skill 配置
+
+代码层配置落在 `cic/agent_skills.py`，用于把每个 CIC 内部 Agent 绑定到可用 skill，而不是只在 prompt 里口头约束。
+
+Skill 分为五类：
+
+| Skill 类别 | 例子 | 约束 |
+| --- | --- | --- |
+| 来源访问 | `public_web_scrape`、`official_disclosure_fetch`、`manual_source_ingest` | 自动访问必须先过 `source_catalog_gate` |
+| 解析提取 | `pdf_announcement_extract`、`claim_extraction` | 输出必须带原文摘录、页码或 raw ref |
+| 数据分析 | `financial_statement_analysis`、`market_snapshot_analysis`、`peer_comparison_analysis` | 只能生成 observation / flags，不直接改状态 |
+| 图谱/治理 | `claim_graph_lookup`、`source_attribution`、`evidence_dedupe` | 保持 source_family、source_rank、independence_group 可审计 |
+| 研究推理/报告 | `contradiction_mining`、`scenario_sensitivity`、`radar_brief_composition` | 只能引用已有事实或显式 unknown |
+
+MVP Agent 默认 skill：
+
+| Agent | 必备 skill | 说明 |
+| --- | --- | --- |
+| Intake Agent | `manual_source_ingest`、`source_attribution`、`claim_extraction`、`kol_profile_lookup`、`evidence_dedupe` | 处理手动输入、KOL 片段和公告文本，KOL-only 只进入验证 |
+| Validation Agent | `claim_graph_lookup`、`cross_source_validation`、`validation_task_builder`、`source_catalog_gate` | 找缺失来源家族，不直接升级 claim |
+| Diff/Risk Agent | `historical_diff`、`contradiction_mining`、`financial_statement_analysis`、`market_snapshot_analysis` | 置顶 A/B 级反证，生成 claim revision 和风险任务 |
+| Editor Agent | `claim_graph_lookup`、`citation_pack_builder`、`radar_brief_composition` | 不允许抓新来源，不允许新增事实 |
+
+完整 Agent 默认 skill：
+
+| Agent | 必备 skill | 特别约束 |
+| --- | --- | --- |
+| Official Disclosure Scout | `official_disclosure_fetch`、`pdf_announcement_extract`、`claim_extraction` | 只抓官方/交易所/公司公告授权来源 |
+| Public Footprint Scout | `public_web_scrape`、`source_attribution`、`claim_extraction` | 只能抓授权公开网页、招聘、专利、招投标、公司官网 |
+| KOL Scout | `manual_source_ingest`、`kol_profile_lookup`、`claim_extraction` | 默认不自动抓社媒；KOL 可提高验证优先级但不能确认事实 |
+| Market Scout | `market_snapshot_analysis`、`peer_comparison_analysis` | 行情/同业数据只作为 observation |
+| Contradiction Agent | `public_web_scrape`、`official_disclosure_fetch`、`financial_statement_analysis`、`market_snapshot_analysis`、`peer_comparison_analysis`、`contradiction_mining` | 每条反证必须绑定 evidence、raw_excerpt、source_url 或明确 unknown |
+| Bear Case Agent | `public_web_scrape`、`official_disclosure_fetch`、`financial_statement_analysis`、`market_snapshot_analysis`、`peer_comparison_analysis`、`scenario_sensitivity`、`citation_pack_builder` | 反驳路径，不给买卖建议，不输出确定收益预测 |
+| Data Fetch Agent | `source_catalog_gate`、`official_disclosure_fetch`、`public_web_scrape`、`market_snapshot_analysis`、`pdf_announcement_extract` | restricted/unknown 来源必须转人工导入任务 |
+
+所有带 `requires_source_gate=true` 的 skill 必须由包含 `source_catalog_gate` 的 agent profile 调用。测试覆盖见 `tests/test_agent_skills.py`。
+
 ## 7. Deterministic Domain Services
 
 Agent-native 架构的成败在这里。

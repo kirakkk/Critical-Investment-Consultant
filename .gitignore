@@ -10,6 +10,8 @@ __pycache__/
 venv/
 data/*.sqlite
 data/*.sqlite-*
+data/*.db
+data/*.db-*
 data/*.json
 !data/sample_holdings.json
 data/server-url.txt
@@ -17,3 +19,4 @@ reports/*.json
 *.log
 .playwright-mcp/
 cic-dashboard*.png
+.agents/skills/gstack/

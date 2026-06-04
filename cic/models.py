@@ -171,6 +171,204 @@ class RadarDecision:
 
 
 @dataclass(slots=True)
+class DeepDiveTask:
+    task_id: str
+    report_id: str
+    claim_id: str
+    stock_code: str
+    stock_name: str
+    question: str
+    trigger_type: str
+    trigger_ref_id: str
+    trigger_reason: str
+    priority: str
+    allowed_source_families: list[str]
+    budget: dict[str, Any]
+    status: str = "pending"
+    auto_run_eligible: bool = True
+    created_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class DeepDiveRun:
+    run_id: str
+    task_id: str
+    status: str
+    model: str
+    sources_checked: list[dict[str, Any]]
+    llm_calls_used: int
+    elapsed_ms: int
+    token_estimate: int
+    stop_reason: str = ""
+    error: str = ""
+    started_at: str = field(default_factory=utc_now_iso)
+    finished_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class DeepDiveFinding:
+    finding_id: str
+    task_id: str
+    finding_type: str
+    claim: str
+    evidence_ref_ids: list[str]
+    source_family: str
+    source_rank: str
+    raw_excerpt: str
+    source_url: str = ""
+    source_title: str = ""
+    score_impact: int = 0
+    confidence: str = "medium"
+
+
+@dataclass(slots=True)
+class DeepDiveVerdict:
+    task_id: str
+    verdict: str
+    summary: str
+    blocker_effect: str
+    score_impact: dict[str, Any]
+    review_required: bool = True
+    decided_by: str = "rule-engine"
+    created_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class DeepDiveDecision:
+    task_id: str
+    decision: str
+    reason: str
+    next_action: str = ""
+    decided_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class SourceCandidate:
+    source_id: str
+    run_id: str
+    source_name: str
+    source_family: str
+    source_rank: str
+    theme: str
+    sensor_type: str
+    source_url: str = ""
+    cost_class: str = "free"
+    access_mode: str = "public_web"
+    license_status: str = "clear"
+    automation_allowed: bool = False
+    collection_status: str = "manual_import_required"
+    reason: str = ""
+    independence_group: str = ""
+    raw_excerpt: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class SensorObservation:
+    observation_id: str
+    run_id: str
+    source_id: str
+    stock_code: str
+    stock_name: str
+    theme: str
+    sensor_type: str
+    metric: str
+    value: str
+    unit: str
+    direction: str
+    signal_strength: int
+    source_family: str
+    source_rank: str
+    independence_group: str
+    source_url: str = ""
+    raw_excerpt: str = ""
+    observation_date: str = field(default_factory=today_iso)
+
+
+@dataclass(slots=True)
+class SensorComparison:
+    comparison_id: str
+    run_id: str
+    theme: str
+    sensor_type: str
+    metric: str
+    result_state: str
+    source_ids: list[str]
+    independent_groups: list[str]
+    support_count: int
+    contradiction_count: int
+    forward_score_delta: int
+    summary: str
+    requires_deep_dive: bool = False
+
+
+@dataclass(slots=True)
+class TransmissionHypothesis:
+    hypothesis_id: str
+    run_id: str
+    stock_code: str
+    stock_name: str
+    theme: str
+    hypothesis: str
+    upstream_signals: list[str]
+    affected_dimensions: list[str]
+    assumptions: list[str]
+    confidence: str
+    evidence_ids: list[str]
+    invalidating_conditions: list[str]
+    score_impact: dict[str, Any]
+
+
+@dataclass(slots=True)
+class ScenarioRun:
+    scenario_id: str
+    run_id: str
+    hypothesis_id: str
+    stock_code: str
+    stock_name: str
+    base_case: dict[str, Any]
+    upside_case: dict[str, Any]
+    downside_case: dict[str, Any]
+    key_variables: list[str]
+    notes: str
+
+
+@dataclass(slots=True)
+class ManualImportTask:
+    task_id: str
+    run_id: str
+    source_id: str
+    source_name: str
+    theme: str
+    requested_input: str
+    reason: str
+    status: str = "pending"
+    created_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
+class ForwardAlphaRun:
+    run_id: str
+    stock_code: str
+    stock_name: str
+    themes: list[str]
+    status: str
+    summary: str
+    budget: dict[str, Any]
+    budget_used: dict[str, Any]
+    source_candidates: list[dict[str, Any]]
+    observations: list[dict[str, Any]]
+    comparisons: list[dict[str, Any]]
+    hypotheses: list[dict[str, Any]]
+    scenarios: list[dict[str, Any]]
+    manual_import_tasks: list[dict[str, Any]]
+    deep_dive_tasks: list[dict[str, Any]]
+    llm_status: str = "disabled"
+    generated_at: str = field(default_factory=utc_now_iso)
+
+
+@dataclass(slots=True)
 class RadarEvidence:
     evidence_id: str
     stock_code: str

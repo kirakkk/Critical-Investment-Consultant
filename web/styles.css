@@ -7,6 +7,7 @@
   --line: #d9ded6;
   --accent: #0f766e;
   --accent-strong: #0b4f4a;
+  --blue: #255e91;
   --risk: #b42318;
   --warn: #b7791f;
   --ok: #287348;
@@ -233,6 +234,14 @@ textarea {
 
 .card {
   padding: 14px;
+}
+
+.deep-dive-card {
+  border-left: 4px solid var(--accent);
+}
+
+.forward-card {
+  border-left: 4px solid var(--blue);
 }
 
 .card-head {

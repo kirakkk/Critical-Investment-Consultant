@@ -50,9 +50,53 @@ class ServerTest(unittest.TestCase):
         sample = self.get_json("/api/sample-radar-signals")
         report = self.post_json("/api/radar/analyze", {"radar": sample, "use_llm": False})
         self.assertIn("radar_report", report)
+        self.assertIn("forward_alpha", report)
         self.assertEqual(report["radar_report"]["stock_code"], "001309.SZ")
+        self.assertGreater(len(report["deep_dives"]["tasks"]), 0)
+        self.assertGreater(len(report["forward_alpha"]["source_candidates"]), 0)
         latest = self.get_json("/api/radar/latest")
         self.assertEqual(latest["radar_report"]["report_id"], report["radar_report"]["report_id"])
+
+    def test_forward_alpha_endpoints(self):
+        sample = self.get_json("/api/sample-radar-signals")
+        result = self.post_json("/api/radar/forward-alpha/run", {"radar": sample, "use_llm": False})
+        self.assertIn("forward_alpha", result)
+        run_id = result["forward_alpha"]["run_id"]
+        latest = self.get_json("/api/radar/forward-alpha/latest")
+        self.assertEqual(latest["forward_alpha"]["run_id"], run_id)
+        by_id = self.get_json(f"/api/radar/forward-alpha/runs/{run_id}")
+        self.assertEqual(by_id["forward_alpha"]["run_id"], run_id)
+        sources = self.get_json("/api/radar/forward-alpha/sources")
+        self.assertGreater(len(sources["sources"]), 0)
+        source_id = sources["sources"][0]["source_id"]
+        decision = self.post_json(
+            f"/api/radar/forward-alpha/source-decisions/{source_id}",
+            {"decision": "approve_manual", "reason": "先手动录入"},
+        )
+        self.assertTrue(decision["ok"])
+        task_id = result["forward_alpha"]["manual_import_tasks"][0]["task_id"]
+        imported = self.post_json(
+            f"/api/radar/forward-alpha/manual-imports/{task_id}",
+            {"raw_excerpt": "渠道价环比上涨。"},
+        )
+        self.assertTrue(imported["ok"])
+
+    def test_deep_dive_queue_run_and_decision_endpoints(self):
+        sample = self.get_json("/api/sample-radar-signals")
+        report = self.post_json("/api/radar/analyze", {"radar": sample, "use_llm": False, "auto_run_deep_dives": False})
+        task_id = report["deep_dives"]["tasks"][0]["task_id"]
+        queue = self.get_json("/api/radar/deep-dives")
+        self.assertEqual(queue["deep_dives"]["tasks"][0]["task_id"], task_id)
+        run = self.post_json(f"/api/radar/deep-dives/{task_id}/run", {})
+        self.assertTrue(run["ok"])
+        self.assertGreater(len(run["deep_dives"]["verdicts"]), 0)
+        decision = self.post_json(
+            f"/api/radar/deep-dives/{task_id}/decision",
+            {"decision": "add_to_review", "reason": "反证深挖进入复盘"},
+        )
+        self.assertTrue(decision["ok"])
+        queue = self.get_json("/api/radar/deep-dives")
+        self.assertEqual(queue["deep_dives"]["decisions"][0]["task_id"], task_id)
 
     def test_radar_claim_decision_endpoint(self):
         sample = self.get_json("/api/sample-radar-signals")

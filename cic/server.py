@@ -7,7 +7,11 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from .models import Decision, RadarDecision, to_jsonable
+from .deep_dive import merge_deep_dive_bundles, run_deep_dive_task
+from .forward_alpha import default_forward_alpha_summary, run_forward_alpha_lab
+from .forward_alpha_store import ForwardAlphaStore
+from .models import Decision, DeepDiveDecision, RadarDecision, to_jsonable
+from .obsidian_wiki import export_radar_wiki_if_configured
 from .radar_report import analyze_radar_input, latest_radar_report_summary
 from .report import analyze_holdings, latest_report_summary
 from .storage import JsonStore
@@ -16,10 +20,12 @@ from .storage import JsonStore
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_ROOT = PROJECT_ROOT / "web"
 DEFAULT_DATA_PATH = PROJECT_ROOT / "data" / "local_store.json"
+DEFAULT_FORWARD_ALPHA_DB_PATH = PROJECT_ROOT / "data" / "forward_alpha.db"
 
 
 class CICRequestHandler(SimpleHTTPRequestHandler):
     store: JsonStore = JsonStore(DEFAULT_DATA_PATH)
+    forward_store: ForwardAlphaStore = ForwardAlphaStore(DEFAULT_FORWARD_ALPHA_DB_PATH)
 
     def translate_path(self, path: str) -> str:
         parsed = urlparse(path)
@@ -48,6 +54,24 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/radar/latest":
             self.write_json(latest_radar_report_summary(self.store.latest_radar_report()))
             return
+        if parsed.path == "/api/radar/deep-dives":
+            self.write_json({"deep_dives": self.store.deep_dives()})
+            return
+        if parsed.path == "/api/radar/forward-alpha/latest":
+            self.write_json(self.forward_store.latest_run())
+            return
+        if parsed.path == "/api/radar/forward-alpha/sources":
+            self.write_json({"sources": self.forward_store.sources()})
+            return
+        if parsed.path.startswith("/api/radar/forward-alpha/runs/"):
+            parts = parsed.path.strip("/").split("/")
+            run_id = parts[4] if len(parts) >= 5 else ""
+            result = self.forward_store.find_run(run_id)
+            if not result:
+                self.write_error(HTTPStatus.NOT_FOUND, "forward alpha run not found")
+                return
+            self.write_json(result)
+            return
         if parsed.path == "/api/decisions":
             self.write_json({"decisions": self.store.decisions()})
             return
@@ -75,12 +99,107 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
             payload = self.read_json()
             radar_payload = payload.get("radar") if isinstance(payload.get("radar"), dict) else payload
             try:
-                report = analyze_radar_input(radar_payload, use_llm=bool(payload.get("use_llm", True)))
+                report = analyze_radar_input(
+                    radar_payload,
+                    use_llm=bool(payload.get("use_llm", True)),
+                    auto_run_deep_dives=bool(payload.get("auto_run_deep_dives", True)),
+                    max_auto_deep_dives=int(payload.get("max_auto_deep_dives") or 2),
+                )
             except ValueError as exc:
                 self.write_error(HTTPStatus.BAD_REQUEST, str(exc))
                 return
             self.store.append_radar_report(report)
+            if bool(payload.get("auto_run_forward_alpha", True)):
+                forward = run_forward_alpha_lab(
+                    radar_payload,
+                    use_llm=bool(payload.get("use_llm", True)),
+                    budget=payload.get("forward_alpha_budget") if isinstance(payload.get("forward_alpha_budget"), dict) else None,
+                )
+                self.forward_store.append_run(forward)
+                self.store.append_deep_dive_bundle(forward.get("deep_dives", {}))
+                report["deep_dives"] = merge_deep_dive_bundles(report.get("deep_dives", {}), forward.get("deep_dives", {}))
+                report["forward_alpha"] = forward.get("forward_alpha", default_forward_alpha_summary()["forward_alpha"])
+            report["wiki"] = export_radar_wiki_if_configured(report)
             self.write_json(report)
+            return
+        if parsed.path == "/api/radar/forward-alpha/run":
+            payload = self.read_json()
+            radar_payload = payload.get("radar") if isinstance(payload.get("radar"), dict) else payload
+            if not radar_payload:
+                latest = self.store.latest_radar_report()
+                radar_payload = latest if latest else {}
+            try:
+                result = run_forward_alpha_lab(
+                    radar_payload,
+                    use_llm=bool(payload.get("use_llm", True)),
+                    budget=payload.get("budget") if isinstance(payload.get("budget"), dict) else None,
+                )
+            except ValueError as exc:
+                self.write_error(HTTPStatus.BAD_REQUEST, str(exc))
+                return
+            self.forward_store.append_run(result)
+            self.store.append_deep_dive_bundle(result.get("deep_dives", {}))
+            self.write_json(result)
+            return
+        if parsed.path.startswith("/api/radar/forward-alpha/source-decisions/"):
+            parts = parsed.path.strip("/").split("/")
+            source_id = parts[4] if len(parts) >= 5 else ""
+            payload = self.read_json()
+            decision = str(payload.get("decision") or "")
+            if decision not in {"approve_manual", "mark_authorized", "block"}:
+                self.write_error(HTTPStatus.BAD_REQUEST, "decision must be approve_manual, mark_authorized, or block")
+                return
+            if not source_id:
+                self.write_error(HTTPStatus.BAD_REQUEST, "source_id is required")
+                return
+            result = self.forward_store.record_source_decision(source_id, decision, str(payload.get("reason") or ""), payload)
+            self.write_json({"ok": True, "decision": result})
+            return
+        if parsed.path.startswith("/api/radar/forward-alpha/manual-imports/"):
+            parts = parsed.path.strip("/").split("/")
+            task_id = parts[4] if len(parts) >= 5 else ""
+            if not task_id:
+                self.write_error(HTTPStatus.BAD_REQUEST, "task_id is required")
+                return
+            task = self.forward_store.record_manual_import(task_id, self.read_json())
+            if not task:
+                self.write_error(HTTPStatus.NOT_FOUND, "manual import task not found")
+                return
+            self.write_json({"ok": True, "manual_import": task})
+            return
+        if parsed.path.startswith("/api/radar/deep-dives/") and parsed.path.endswith("/run"):
+            parts = parsed.path.strip("/").split("/")
+            task_id = parts[3] if len(parts) >= 5 else ""
+            task = self.store.find_deep_dive_task(task_id)
+            if not task:
+                self.write_error(HTTPStatus.NOT_FOUND, "deep dive task not found")
+                return
+            report = self.store.find_radar_report(str(task.get("report_id") or "")) or self.store.latest_radar_report()
+            if not report:
+                self.write_error(HTTPStatus.NOT_FOUND, "radar report not found")
+                return
+            bundle = run_deep_dive_task(task, report)
+            self.store.append_deep_dive_bundle(bundle)
+            self.write_json({"ok": True, "deep_dives": bundle})
+            return
+        if parsed.path.startswith("/api/radar/deep-dives/") and parsed.path.endswith("/decision"):
+            parts = parsed.path.strip("/").split("/")
+            task_id = parts[3] if len(parts) >= 5 else ""
+            payload = self.read_json()
+            decision = DeepDiveDecision(
+                task_id=task_id,
+                decision=str(payload.get("decision") or ""),
+                reason=str(payload.get("reason") or ""),
+                next_action=str(payload.get("next_action") or ""),
+            )
+            if decision.decision not in {"confirm", "ignore", "add_to_review"}:
+                self.write_error(HTTPStatus.BAD_REQUEST, "decision must be confirm, ignore, or add_to_review")
+                return
+            if not decision.task_id:
+                self.write_error(HTTPStatus.BAD_REQUEST, "task_id is required")
+                return
+            self.store.add_deep_dive_decision(decision)
+            self.write_json({"ok": True, "decision": to_jsonable(decision)})
             return
         if parsed.path.startswith("/api/signals/") and parsed.path.endswith("/decision"):
             parts = parsed.path.strip("/").split("/")
@@ -152,7 +271,13 @@ class CICRequestHandler(SimpleHTTPRequestHandler):
 
 def create_server(host: str = "127.0.0.1", port: int = 8765, data_path: str | Path | None = None) -> ThreadingHTTPServer:
     handler = CICRequestHandler
-    handler.store = JsonStore(data_path or os.getenv("CIC_DATA_PATH") or DEFAULT_DATA_PATH)
+    resolved_data_path = Path(data_path or os.getenv("CIC_DATA_PATH") or DEFAULT_DATA_PATH)
+    handler.store = JsonStore(resolved_data_path)
+    forward_path = os.getenv("CIC_FORWARD_ALPHA_DB_PATH")
+    if forward_path:
+        handler.forward_store = ForwardAlphaStore(forward_path)
+    else:
+        handler.forward_store = ForwardAlphaStore(resolved_data_path.with_name("forward_alpha.db"))
     return ThreadingHTTPServer((host, port), handler)
 
 
